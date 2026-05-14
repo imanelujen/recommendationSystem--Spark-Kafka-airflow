@@ -1,0 +1,1542 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RecoSystem — Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+/* ══════════════════════════════════════════════════
+   TOKENS — Light (default)
+══════════════════════════════════════════════════ */
+:root {
+  --bg:           #F3F4F6;
+  --sidebar:      #232F3E;
+  --sidebar2:     #1A2533;
+  --side-txt:     #C8CDD5;
+  --side-muted:   #7B8794;
+  --topbar:       #FFFFFF;
+  --card:         #FFFFFF;
+  --border:       #E5E7EB;
+  --text:         #111827;
+  --text2:        #374151;
+  --muted:        #6B7280;
+  --orange:       #FF9900;
+  --orange-dim:   rgba(255,153,0,.12);
+  --orange2:      #E88C00;
+  --green:        #16A34A;
+  --green-dim:    rgba(22,163,74,.1);
+  --red:          #DC2626;
+  --red-dim:      rgba(220,38,38,.1);
+  --amber:        #D97706;
+  --amber-dim:    rgba(217,119,6,.1);
+  --teal:         #0891B2;
+  --teal-dim:     rgba(8,145,178,.1);
+  --blue:         #2563EB;
+  --shadow:       0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:    0 4px 12px rgba(0,0,0,.08),0 2px 4px rgba(0,0,0,.04);
+  --shadow-lg:    0 10px 25px rgba(0,0,0,.1),0 4px 10px rgba(0,0,0,.05);
+  --radius:       10px;
+  --sidebar-w:    240px;
+}
+[data-theme="dark"] {
+  --bg:           #131921;
+  --topbar:       #232F3E;
+  --card:         #1D2D3E;
+  --border:       #334155;
+  --text:         #E7E9EC;
+  --text2:        #CBD5E1;
+  --muted:        #8D9197;
+  --shadow:       0 1px 3px rgba(0,0,0,.4),0 1px 2px rgba(0,0,0,.3);
+  --shadow-md:    0 4px 12px rgba(0,0,0,.4),0 2px 4px rgba(0,0,0,.3);
+  --shadow-lg:    0 10px 25px rgba(0,0,0,.5),0 4px 10px rgba(0,0,0,.3);
+  --orange-dim:   rgba(255,153,0,.15);
+  --green-dim:    rgba(22,163,74,.15);
+  --red-dim:      rgba(220,38,38,.15);
+  --amber-dim:    rgba(217,119,6,.15);
+  --teal-dim:     rgba(8,145,178,.15);
+}
+
+/* ── Reset ── */
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px; line-height: 1.5; overflow-x: hidden;
+}
+a { text-decoration: none; color: inherit; }
+
+/* ══════════════════════════════════════════════════
+   LAYOUT
+══════════════════════════════════════════════════ */
+.app { display: flex; height: 100vh; overflow: hidden; }
+
+/* ── Sidebar ── */
+.sidebar {
+  width: var(--sidebar-w); background: var(--sidebar);
+  display: flex; flex-direction: column;
+  transition: width .25s ease; flex-shrink: 0;
+  overflow: hidden; z-index: 200;
+}
+.sidebar.collapsed { width: 60px; }
+
+.sidebar-logo {
+  display: flex; align-items: center; gap: 10px;
+  padding: 18px 16px; border-bottom: 1px solid rgba(255,255,255,.07);
+  min-height: 64px; overflow: hidden;
+}
+.sidebar-logo img#logo-img { width: 32px; height: 32px; border-radius: 6px; object-fit: cover; flex-shrink: 0; display: none; }
+.logo-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: var(--orange); display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-size: 16px; font-weight: 900; color: #111; letter-spacing: -1px;
+}
+.logo-text { white-space: nowrap; overflow: hidden; }
+.logo-name { font-size: 15px; font-weight: 700; color: #fff; }
+.logo-sub  { font-size: 10px; color: var(--side-muted); margin-top: 1px; }
+
+.sidebar-toggle {
+  position: absolute; left: calc(var(--sidebar-w) - 14px); top: 22px;
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--orange); border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: #111; font-size: 12px; transition: left .25s; z-index: 201; box-shadow: var(--shadow-md);
+}
+.sidebar.collapsed ~ .sidebar-toggle,
+.sidebar-toggle.collapsed { left: 48px; }
+
+nav.sidenav { flex: 1; overflow-y: auto; padding: 10px 0; }
+nav.sidenav::-webkit-scrollbar { width: 4px; }
+nav.sidenav::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 2px; }
+
+.nav-section { padding: 16px 12px 4px; font-size: 10px; font-weight: 700;
+  color: var(--side-muted); text-transform: uppercase; letter-spacing: .1em;
+  white-space: nowrap; overflow: hidden; }
+.sidebar.collapsed .nav-section { opacity: 0; }
+
+.nav-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 16px; cursor: pointer; border-radius: 8px; margin: 1px 8px;
+  color: var(--side-txt); transition: all .15s; position: relative; white-space: nowrap;
+}
+.nav-item:hover { background: rgba(255,255,255,.07); color: #fff; }
+.nav-item.active { background: var(--orange-dim); color: var(--orange); border: 1px solid rgba(255,153,0,.2); }
+.nav-item.active .nav-icon { color: var(--orange); }
+.nav-icon { width: 20px; height: 20px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.nav-label { font-size: 13px; font-weight: 500; overflow: hidden; }
+.nav-badge {
+  margin-left: auto; background: var(--red); color: #fff;
+  font-size: 10px; font-weight: 700; min-width: 18px; height: 18px;
+  border-radius: 9px; display: flex; align-items: center; justify-content: center; padding: 0 4px;
+}
+.sidebar.collapsed .nav-label,
+.sidebar.collapsed .nav-badge,
+.sidebar.collapsed .nav-section { display: none; }
+.sidebar.collapsed .nav-item { justify-content: center; padding: 12px; }
+
+.sidebar-footer {
+  padding: 16px; border-top: 1px solid rgba(255,255,255,.07);
+  display: flex; align-items: center; gap: 10px; overflow: hidden;
+}
+.avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--orange); color: #111; font-weight: 700; font-size: 13px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.user-name { font-size: 13px; font-weight: 600; color: #fff; white-space: nowrap; }
+.user-role { font-size: 11px; color: var(--side-muted); }
+.sidebar.collapsed .sidebar-footer > *:not(.avatar) { display: none; }
+
+/* ── Main wrapper ── */
+.main-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+/* ── Topbar ── */
+.topbar {
+  background: var(--topbar); border-bottom: 1px solid var(--border);
+  height: 64px; display: flex; align-items: center; padding: 0 24px; gap: 16px;
+  position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow); flex-shrink: 0;
+}
+.topbar-title { font-size: 16px; font-weight: 700; color: var(--text); }
+.topbar-sub   { font-size: 12px; color: var(--muted); margin-top: 1px; }
+
+.search-wrap {
+  flex: 1; max-width: 420px; position: relative; margin-left: 12px;
+}
+.search-wrap input {
+  width: 100%; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 14px 8px 38px; color: var(--text); font-size: 13px;
+  outline: none; transition: border-color .15s;
+}
+.search-wrap input:focus { border-color: var(--orange); }
+.search-wrap .s-icon {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  color: var(--muted); pointer-events: none;
+}
+
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+
+.icon-btn {
+  width: 38px; height: 38px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--card); cursor: pointer; display: flex; align-items: center; justify-content: center;
+  color: var(--muted); transition: all .15s; position: relative;
+}
+.icon-btn:hover { border-color: var(--orange); color: var(--orange); }
+.icon-btn .notif-dot {
+  position: absolute; top: 6px; right: 6px;
+  width: 8px; height: 8px; border-radius: 50%; background: var(--red);
+  border: 2px solid var(--card);
+}
+
+.theme-toggle {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 6px 12px; cursor: pointer; color: var(--muted);
+  font-size: 12px; font-weight: 500; transition: all .15s;
+}
+.theme-toggle:hover { border-color: var(--orange); color: var(--text); }
+
+.status-pill {
+  display: flex; align-items: center; gap: 6px; padding: 6px 12px;
+  background: var(--green-dim); border: 1px solid rgba(22,163,74,.2);
+  border-radius: 8px; font-size: 12px; color: var(--green); font-weight: 500;
+}
+.dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+.dot.green { background: var(--green); }
+.dot.red   { background: var(--red); }
+.dot.amber { background: var(--amber); }
+.dot.pulse { animation: pulse 1.5s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* ── Content area ── */
+.content { flex: 1; overflow-y: auto; padding: 24px; }
+.content::-webkit-scrollbar { width: 6px; }
+.content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.page { display: none; max-width: 1400px; margin: 0 auto; }
+.page.active { display: block; }
+
+/* ── Page header ── */
+.page-header { margin-bottom: 20px; }
+.page-header h2 { font-size: 22px; font-weight: 700; color: var(--text); }
+.page-header p  { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+/* ══════════════════════════════════════════════════
+   COMPONENTS
+══════════════════════════════════════════════════ */
+
+/* ── Card ── */
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  transition: box-shadow .15s;
+}
+.card:hover { box-shadow: var(--shadow-md); }
+.card-body { padding: 20px; }
+.card-header {
+  padding: 16px 20px 0;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.card-title { font-size: 13px; font-weight: 600; color: var(--text2); }
+.card-sub   { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.card-divider { height: 1px; background: var(--border); margin: 14px 0; }
+
+/* ── Grid ── */
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.g3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+.g4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; }
+.g5 { display: grid; grid-template-columns: repeat(5,1fr); gap: 16px; }
+.mb  { margin-bottom: 16px; }
+.mb2 { margin-bottom: 24px; }
+
+/* ── KPI card ── */
+.kpi-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 20px 22px; position: relative; overflow: hidden;
+}
+.kpi-card::before {
+  content: ''; position: absolute; top: 0; left: 0;
+  width: 4px; height: 100%; border-radius: var(--radius) 0 0 var(--radius);
+}
+.kpi-card.orange::before { background: var(--orange); }
+.kpi-card.green::before  { background: var(--green); }
+.kpi-card.teal::before   { background: var(--teal); }
+.kpi-card.amber::before  { background: var(--amber); }
+.kpi-card.red::before    { background: var(--red); }
+.kpi-card.blue::before   { background: var(--blue); }
+.kpi-icon {
+  width: 42px; height: 42px; border-radius: 10px; margin-bottom: 14px;
+  display: flex; align-items: center; justify-content: center; font-size: 20px;
+}
+.kpi-card.orange .kpi-icon { background: var(--orange-dim); }
+.kpi-card.green  .kpi-icon { background: var(--green-dim); }
+.kpi-card.teal   .kpi-icon { background: var(--teal-dim); }
+.kpi-card.amber  .kpi-icon { background: var(--amber-dim); }
+.kpi-card.blue   .kpi-icon { background: rgba(37,99,235,.1); }
+.kpi-val  { font-size: 30px; font-weight: 800; line-height: 1; color: var(--text); }
+.kpi-lbl  { font-size: 12px; color: var(--muted); margin-top: 5px; font-weight: 500; }
+.kpi-trend { font-size: 11px; color: var(--green); margin-top: 8px; font-weight: 600; }
+
+/* ── Badge ── */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;
+}
+.badge.up     { background: var(--green-dim); color: var(--green); }
+.badge.down   { background: var(--red-dim);   color: var(--red); }
+.badge.warn   { background: var(--amber-dim); color: var(--amber); }
+.badge.info   { background: var(--teal-dim);  color: var(--teal); }
+.badge.orange { background: var(--orange-dim);color: var(--orange); }
+
+/* ── Table ── */
+.tbl-wrap { overflow-x: auto; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tbl th {
+  padding: 10px 14px; text-align: left; font-size: 11px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .06em; font-weight: 600;
+  border-bottom: 2px solid var(--border); background: var(--bg); white-space: nowrap;
+}
+.tbl td { padding: 12px 14px; border-bottom: 1px solid var(--border); color: var(--text2); }
+.tbl tr:last-child td { border-bottom: none; }
+.tbl tbody tr:hover td { background: var(--orange-dim); }
+.mono { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px; }
+
+/* ── Form controls ── */
+.inp {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 14px; color: var(--text); font-size: 14px;
+  outline: none; transition: border-color .15s; width: 100%;
+}
+.inp:focus { border-color: var(--orange); box-shadow: 0 0 0 3px var(--orange-dim); }
+.sel {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 14px; color: var(--text); font-size: 14px; cursor: pointer;
+}
+.btn {
+  padding: 10px 22px; border: none; border-radius: 8px;
+  font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s;
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+}
+.btn-primary { background: var(--orange); color: #111; box-shadow: 0 2px 6px rgba(255,153,0,.3); }
+.btn-primary:hover { background: var(--orange2); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255,153,0,.4); }
+.btn-secondary { background: var(--bg); color: var(--text2); border: 1px solid var(--border); }
+.btn-secondary:hover { border-color: var(--orange); color: var(--orange); background: var(--orange-dim); }
+.btn-danger { background: var(--red-dim); color: var(--red); border: 1px solid rgba(220,38,38,.2); }
+.btn-sm { padding: 6px 14px; font-size: 12px; }
+
+/* ── Toggle switch ── */
+.toggle { position: relative; display: inline-block; width: 44px; height: 24px; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute; inset: 0; background: var(--border); border-radius: 12px; cursor: pointer; transition: .2s;
+}
+.toggle-slider::before {
+  content: ''; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px;
+  background: #fff; border-radius: 50%; transition: .2s; box-shadow: var(--shadow);
+}
+.toggle input:checked + .toggle-slider { background: var(--orange); }
+.toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+/* ── Search row ── */
+.search-row { display: flex; gap: 10px; margin-bottom: 16px; }
+
+/* ── Product grid ── */
+.prod-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap: 12px; margin-top: 16px; }
+.prod-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 16px 14px; cursor: pointer; transition: all .15s; position: relative;
+  text-align: center;
+}
+.prod-card:hover { border-color: var(--orange); box-shadow: 0 0 0 3px var(--orange-dim), var(--shadow-md); transform: translateY(-2px); }
+.prod-rank {
+  position: absolute; top: 10px; left: 10px;
+  min-width: 24px; height: 24px; border-radius: 6px; font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; padding: 0 5px;
+}
+.prod-rank.r1 { background: var(--orange); color: #111; }
+.prod-rank.r2 { background: #9CA3AF;       color: #fff; }
+.prod-rank.r3 { background: #92400E;       color: #fff; }
+.prod-rank.rn { background: var(--bg); color: var(--muted); border: 1px solid var(--border); }
+.prod-emoji { font-size: 32px; margin: 6px 0 10px; line-height: 1; }
+.prod-id { font-size: 10px; font-weight: 600; word-break: break-all; color: var(--text2); line-height: 1.4; }
+.prod-link { display: block; margin-top: 8px; font-size: 10px; color: var(--orange); }
+.prod-link:hover { text-decoration: underline; }
+
+/* ── Chips ── */
+.chip {
+  display: inline-block; padding: 4px 12px; border-radius: 6px;
+  background: var(--orange-dim); color: var(--orange); border: 1px solid rgba(255,153,0,.2);
+  font-size: 11px; cursor: pointer; margin: 3px; transition: all .12s; font-weight: 500;
+}
+.chip:hover { background: var(--orange); color: #111; }
+
+/* ── Stream rows ── */
+.stream-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 12px;
+  animation: fadein .3s ease;
+}
+.stream-row:last-child { border-bottom: none; }
+@keyframes fadein { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:none} }
+
+/* ── Service rows ── */
+.svc-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 0; border-bottom: 1px solid var(--border);
+}
+.svc-row:last-child { border-bottom: none; }
+.svc-name { font-weight: 600; font-size: 14px; }
+.svc-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+/* ── Chart wrap ── */
+.chart-wrap { position: relative; height: 240px; }
+.chart-wrap.tall { height: 300px; }
+
+/* ── Notification items ── */
+.notif-item {
+  display: flex; gap: 14px; padding: 14px 20px; cursor: pointer;
+  border-bottom: 1px solid var(--border); transition: background .1s;
+}
+.notif-item:hover { background: var(--bg); }
+.notif-item.unread { background: var(--orange-dim); }
+.notif-dot2 { width: 8px; height: 8px; border-radius: 50%; background: var(--orange); margin-top: 6px; flex-shrink: 0; }
+.notif-icon-wrap {
+  width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 18px;
+}
+.notif-title { font-size: 13px; font-weight: 600; color: var(--text); }
+.notif-desc  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.notif-time  { font-size: 11px; color: var(--muted); margin-left: auto; white-space: nowrap; }
+
+/* ── Settings ── */
+.settings-section { margin-bottom: 28px; }
+.settings-section h3 { font-size: 15px; font-weight: 700; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+.setting-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 0; border-bottom: 1px solid var(--border);
+}
+.setting-row:last-child { border-bottom: none; }
+.setting-label { font-size: 13px; font-weight: 500; }
+.setting-desc  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+/* ── Progress bar ── */
+.prog-wrap { background: var(--border); border-radius: 4px; height: 6px; margin-top: 6px; }
+.prog      { height: 6px; border-radius: 4px; background: var(--orange); transition: width .4s; }
+
+/* ── Loading ── */
+.loading { color: var(--muted); font-size: 13px; padding: 30px 0; text-align: center; }
+
+/* ── Empty state ── */
+.empty-state { text-align: center; padding: 48px 20px; color: var(--muted); }
+.empty-state .empty-icon { font-size: 40px; margin-bottom: 12px; opacity: .5; }
+.empty-state p { font-size: 14px; }
+
+/* ── Tooltip ── */
+[title] { cursor: help; }
+
+/* ── Color swatches (Settings) ── */
+.swatch-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.swatch {
+  width: 32px; height: 32px; border-radius: 8px; cursor: pointer; border: 2px solid transparent;
+  transition: border-color .15s; flex-shrink: 0;
+}
+.swatch.active { border-color: var(--text); }
+
+/* ── BG overlay ── */
+#bg-overlay {
+  position: fixed; inset: 0; background-image: var(--bg-img, none);
+  background-size: cover; background-position: center;
+  opacity: var(--bg-opacity, 0); pointer-events: none; z-index: 0;
+}
+.app { position: relative; z-index: 1; }
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .g4 { grid-template-columns: repeat(2,1fr); }
+  .g3 { grid-template-columns: repeat(2,1fr); }
+  .g5 { grid-template-columns: repeat(2,1fr); }
+  .sidebar { width: 60px; }
+  .sidebar .nav-label,.sidebar .nav-badge,.sidebar .nav-section,.sidebar .logo-text,.sidebar .sidebar-footer > *:not(.avatar) { display: none; }
+  .sidebar .nav-item { justify-content: center; padding: 12px; }
+  .sidebar .sidebar-logo { justify-content: center; }
+}
+@media (max-width: 600px) {
+  .g2 { grid-template-columns: 1fr; }
+  .content { padding: 16px; }
+}
+</style>
+</head>
+<body>
+<div id="bg-overlay"></div>
+
+<div class="app">
+
+<!-- ══════════════════════════════════════════════════
+     SIDEBAR
+══════════════════════════════════════════════════ -->
+<aside class="sidebar" id="sidebar">
+
+  <div class="sidebar-logo">
+    <img id="logo-img" src="" alt="logo">
+    <div class="logo-icon" id="logo-icon">R</div>
+    <div class="logo-text">
+      <div class="logo-name">RecoSystem</div>
+      <div class="logo-sub">Amazon Reviews</div>
+    </div>
+  </div>
+
+  <nav class="sidenav">
+    <div class="nav-section">Principal</div>
+
+    <div class="nav-item active" onclick="showPage('dashboard',this)">
+      <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></span>
+      <span class="nav-label">Dashboard</span>
+    </div>
+
+    <div class="nav-item" onclick="showPage('recommendations',this)">
+      <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+      <span class="nav-label">Recommandations</span>
+    </div>
+
+    <div class="nav-item" onclick="showPage('streaming',this)">
+      <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>
+      <span class="nav-label">Streaming</span>
+    </div>
+
+    <div class="nav-section">Analytiques</div>
+
+    <div class="nav-item" onclick="showPage('analytics',this)">
+      <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>
+      <span class="nav-label">Analytics</span>
+    </div>
+
+    <div class="nav-item" onclick="showPage('monitoring',this)">
+      <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="8 21 12 17 16 21"/></svg></span>
+      <span class="nav-label">Monitoring</span>
+    </div>
+
+    <div class="nav-item" onclick="showPage('logs',this)">
+      <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg></span>
+      <span class="nav-label">Logs API</span>
+    </div>
+
+    <div class="nav-section">Systeme</div>
+
+    <div class="nav-item" onclick="showPage('notifications',this)" id="nav-notif">
+      <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>
+      <span class="nav-label">Notifications</span>
+      <span class="nav-badge" id="notif-badge">3</span>
+    </div>
+
+    <div class="nav-item" onclick="showPage('settings',this)">
+      <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+      <span class="nav-label">Parametres</span>
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="avatar" id="user-avatar">D</div>
+    <div>
+      <div class="user-name" id="user-name">Data Team</div>
+      <div class="user-role">Administrateur</div>
+    </div>
+  </div>
+
+</aside>
+
+<!-- ══════════════════════════════════════════════════
+     MAIN WRAPPER
+══════════════════════════════════════════════════ -->
+<div class="main-wrapper">
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <button onclick="toggleSidebar()" class="icon-btn" style="border:none;background:none;color:var(--muted)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+
+    <div>
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+      <div class="topbar-sub" id="topbar-sub">Vue d'ensemble du systeme</div>
+    </div>
+
+    <div class="search-wrap">
+      <span class="s-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </span>
+      <input id="global-search" placeholder="Rechercher un utilisateur..." onkeydown="if(event.key==='Enter'){showPage('recommendations');fetchRecoSearch(this.value);}">
+    </div>
+
+    <div class="topbar-right">
+      <div class="status-pill" id="api-status">
+        <span class="dot amber pulse" id="api-dot"></span>
+        <span id="api-badge-txt">Connexion...</span>
+      </div>
+
+      <button class="theme-toggle" onclick="toggleTheme()">
+        <span id="theme-icon">☀️</span>
+        <span id="theme-label">Clair</span>
+      </button>
+
+      <button class="icon-btn" onclick="showPage('notifications')" title="Notifications">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="notif-dot" id="topbar-notif-dot"></span>
+      </button>
+
+      <button class="icon-btn" onclick="showPage('settings')" title="Parametres">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+
+      <div class="avatar" style="cursor:default">D</div>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <main class="content">
+
+    <!-- ══ PAGE: DASHBOARD ══ -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <h2>Vue d'ensemble</h2>
+        <p>Tableau de bord principal — Amazon Fine Food Reviews · ALS Collaborative Filtering</p>
+      </div>
+
+      <div class="g4 mb2">
+        <div class="kpi-card orange">
+          <div class="kpi-icon">👥</div>
+          <div class="kpi-val" id="kpi-users">—</div>
+          <div class="kpi-lbl">Utilisateurs indexes</div>
+          <div class="kpi-trend" id="kpi-users-trend"></div>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-icon">📦</div>
+          <div class="kpi-val" id="kpi-products">—</div>
+          <div class="kpi-lbl">Produits indexes</div>
+          <div class="kpi-trend" id="kpi-products-trend"></div>
+        </div>
+        <div class="kpi-card teal">
+          <div class="kpi-icon">⚡</div>
+          <div class="kpi-val" id="kpi-calls">—</div>
+          <div class="kpi-lbl">Appels API total</div>
+        </div>
+        <div class="kpi-card amber">
+          <div class="kpi-icon">🎯</div>
+          <div class="kpi-val" id="kpi-rmse">—</div>
+          <div class="kpi-lbl">RMSE modele</div>
+        </div>
+      </div>
+
+      <div class="g2 mb">
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Latence API — derniere heure</div><div class="card-sub">Moyenne en ms par creneau horaire</div></div>
+            <span class="badge info">Temps reel</span>
+          </div>
+          <div class="card-body">
+            <div class="chart-wrap"><canvas id="chart-latency"></canvas></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Top produits recommandes</div><div class="card-sub">Produits les plus souvent suggeres</div></div>
+          </div>
+          <div class="card-body">
+            <div class="chart-wrap"><canvas id="chart-top-prod"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="g2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Etat des services</div></div>
+          <div class="card-body" id="services-mini"><div class="loading">Chargement...</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Modele ALS — infos</div><div><span class="badge orange" id="model-version-badge">—</span></div></div>
+          <div class="card-body" id="model-info"><div class="loading">Chargement...</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PAGE: RECOMMENDATIONS ══ -->
+    <div class="page" id="page-recommendations">
+      <div class="page-header">
+        <h2>Recommandations</h2>
+        <p>Recherchez des recommandations personnalisees en temps reel pour un utilisateur</p>
+      </div>
+
+      <div class="card mb">
+        <div class="card-body">
+          <div class="search-row">
+            <input class="inp" id="uid-input" placeholder="Entrez un UserId (ex: A3OXHLG6DIBRW8)" style="font-size:15px"/>
+            <select class="sel" id="topn-sel">
+              <option value="5">Top 5</option>
+              <option value="10" selected>Top 10</option>
+              <option value="20">Top 20</option>
+            </select>
+            <button class="btn btn-primary" onclick="fetchReco()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              Recommander
+            </button>
+            <button class="btn btn-secondary" onclick="randomUser()">Aleatoire</button>
+          </div>
+          <div>
+            <span style="font-size:12px;color:var(--muted);margin-right:4px">Utilisateurs recents :</span>
+            <span id="chips"><span class="loading" style="padding:4px">Chargement...</span></span>
+          </div>
+        </div>
+      </div>
+
+      <div id="reco-result" style="display:none" class="mb">
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Resultats pour <span id="reco-uid-label" style="color:var(--orange)"></span></div></div>
+            <div style="font-size:12px;color:var(--muted)" id="reco-meta"></div>
+          </div>
+          <div class="card-body" id="reco-grid"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">Historique de session</div></div>
+        <div class="card-body">
+          <div id="reco-history"><div class="empty-state"><div class="empty-icon">🔍</div><p>Aucune recherche effectuee dans cette session.</p></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PAGE: STREAMING ══ -->
+    <div class="page" id="page-streaming">
+      <div class="page-header">
+        <h2>Streaming Kafka</h2>
+        <p>Flux d'evenements en temps reel — Kafka → Spark → PostgreSQL</p>
+      </div>
+
+      <div class="g3 mb">
+        <div class="kpi-card teal">
+          <div class="kpi-icon">📡</div>
+          <div class="kpi-val" id="stream-total">—</div>
+          <div class="kpi-lbl">Evenements total</div>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-icon">🕐</div>
+          <div class="kpi-val" id="stream-hour">—</div>
+          <div class="kpi-lbl">Derniere heure</div>
+        </div>
+        <div class="kpi-card orange">
+          <div class="kpi-icon">📈</div>
+          <div class="kpi-val" id="stream-rate">—</div>
+          <div class="kpi-lbl">Taux / minute (estime)</div>
+        </div>
+      </div>
+
+      <div class="g2">
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Flux live</div><div class="card-sub">Dernieres interactions utilisateur-produit</div></div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <span class="dot green pulse"></span>
+              <span style="font-size:11px;color:var(--muted)">5s</span>
+              <button class="btn btn-secondary btn-sm" onclick="loadStream()">Rafraichir</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="stream-events"><div class="loading">Chargement...</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Distribution des scores</div></div>
+          <div class="card-body"><div class="chart-wrap"><canvas id="chart-scores"></canvas></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PAGE: ANALYTICS ══ -->
+    <div class="page" id="page-analytics">
+      <div class="page-header">
+        <h2>Analytics</h2>
+        <p>Metriques detaillees — requetes, latences, modele ML</p>
+      </div>
+
+      <div class="g2 mb">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Requetes par heure — 24h</div></div>
+          <div class="card-body"><div class="chart-wrap"><canvas id="chart-req-hour"></canvas></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Latence moyenne par heure (ms)</div></div>
+          <div class="card-body"><div class="chart-wrap"><canvas id="chart-lat-hour"></canvas></div></div>
+        </div>
+      </div>
+
+      <div class="g2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Top 10 produits les plus recommandes</div></div>
+          <div class="card-body"><div class="chart-wrap tall"><canvas id="chart-top-prod-full"></canvas></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Historique RMSE du modele</div></div>
+          <div class="card-body">
+            <div id="metrics-table"><div class="loading">Chargement...</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PAGE: MONITORING ══ -->
+    <div class="page" id="page-monitoring">
+      <div class="page-header">
+        <h2>Monitoring</h2>
+        <p>Etat des services de l'infrastructure Big Data</p>
+      </div>
+
+      <div class="g2 mb">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Etat des services</div></div>
+          <div class="card-body" id="services-full"><div class="loading">Chargement...</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Modele — detail technique</div></div>
+          <div class="card-body">
+            <div class="g2" style="gap:10px" id="model-detail"><div class="loading">Chargement...</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">Acces rapide aux interfaces</div></div>
+        <div class="card-body">
+          <div class="g4" style="gap:12px">
+            <a href="http://localhost:8080" target="_blank" class="btn btn-secondary" style="justify-content:center">Spark Master — 8080</a>
+            <a href="http://localhost:8088" target="_blank" class="btn btn-secondary" style="justify-content:center">Airflow — 8088</a>
+            <a href="http://localhost:8000/docs" target="_blank" class="btn btn-secondary" style="justify-content:center">API Swagger — 8000</a>
+            <a href="http://localhost:8081" target="_blank" class="btn btn-secondary" style="justify-content:center">Spark Worker — 8081</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PAGE: LOGS ══ -->
+    <div class="page" id="page-logs">
+      <div class="page-header">
+        <h2>Logs API</h2>
+        <p>Historique des appels API avec latences et statuts</p>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Appels recents</div>
+          <div style="display:flex;gap:8px">
+            <select class="sel" id="log-limit" style="padding:6px 10px;font-size:12px">
+              <option value="20">20 lignes</option>
+              <option value="50" selected>50 lignes</option>
+              <option value="100">100 lignes</option>
+            </select>
+            <button class="btn btn-secondary btn-sm" onclick="loadLogs()">Rafraichir</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="tbl-wrap">
+            <table class="tbl">
+              <thead>
+                <tr>
+                  <th>Utilisateur</th><th>Top-N</th><th>Latence (ms)</th><th>Statut</th><th>Horodatage</th>
+                </tr>
+              </thead>
+              <tbody id="logs-body">
+                <tr><td colspan="5" class="loading">Chargement...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PAGE: NOTIFICATIONS ══ -->
+    <div class="page" id="page-notifications">
+      <div class="page-header">
+        <h2>Notifications</h2>
+        <p>Evenements systeme et alertes du pipeline</p>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Centre de notifications</div>
+          <button class="btn btn-secondary btn-sm" onclick="markAllRead()">Tout marquer comme lu</button>
+        </div>
+        <div id="notif-list"></div>
+      </div>
+    </div>
+
+    <!-- ══ PAGE: SETTINGS ══ -->
+    <div class="page" id="page-settings">
+      <div class="page-header">
+        <h2>Parametres</h2>
+        <p>Personnalisez l'interface et les preferences de la plateforme</p>
+      </div>
+
+      <div class="g2">
+        <div>
+          <!-- Apparence -->
+          <div class="card mb">
+            <div class="card-body">
+              <div class="settings-section">
+                <h3>Apparence</h3>
+                <div class="setting-row">
+                  <div>
+                    <div class="setting-label">Mode sombre</div>
+                    <div class="setting-desc">Basculer entre le theme clair et sombre</div>
+                  </div>
+                  <label class="toggle"><input type="checkbox" id="dark-toggle" onchange="toggleThemeCheck(this)"><span class="toggle-slider"></span></label>
+                </div>
+                <div class="setting-row">
+                  <div>
+                    <div class="setting-label">Couleur principale</div>
+                    <div class="setting-desc">Accent de l'interface</div>
+                  </div>
+                  <div class="swatch-row">
+                    <div class="swatch active" style="background:#FF9900" onclick="setAccent('#FF9900','#E88C00',this)" title="Amazon Orange"></div>
+                    <div class="swatch" style="background:#2563EB" onclick="setAccent('#2563EB','#1D4ED8',this)" title="Bleu"></div>
+                    <div class="swatch" style="background:#16A34A" onclick="setAccent('#16A34A','#15803D',this)" title="Vert"></div>
+                    <div class="swatch" style="background:#9333EA" onclick="setAccent('#9333EA','#7E22CE',this)" title="Violet"></div>
+                    <div class="swatch" style="background:#DC2626" onclick="setAccent('#DC2626','#B91C1C',this)" title="Rouge"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Image de fond -->
+          <div class="card mb">
+            <div class="card-body">
+              <div class="settings-section">
+                <h3>Image de fond</h3>
+                <div class="setting-row">
+                  <div>
+                    <div class="setting-label">URL de l'image</div>
+                    <div class="setting-desc">Ajoutez une image en arriere-plan</div>
+                  </div>
+                </div>
+                <input class="inp mb" id="bg-url" placeholder="https://example.com/image.jpg" oninput="applyBg()">
+                <div class="setting-row">
+                  <div>
+                    <div class="setting-label">Opacite du fond</div>
+                    <div class="setting-desc">Ajustez la transparence</div>
+                  </div>
+                  <span id="bg-opacity-val" style="font-weight:600;color:var(--orange)">0%</span>
+                </div>
+                <input type="range" min="0" max="60" value="0" id="bg-opacity" oninput="applyBg()" style="width:100%;accent-color:var(--orange);margin-top:8px">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <!-- Logo & identite -->
+          <div class="card mb">
+            <div class="card-body">
+              <div class="settings-section">
+                <h3>Logo & Identite</h3>
+                <div class="setting-row">
+                  <div>
+                    <div class="setting-label">URL du logo</div>
+                    <div class="setting-desc">Remplace l'icone par defaut</div>
+                  </div>
+                </div>
+                <input class="inp mb" id="logo-url" placeholder="https://example.com/logo.png" oninput="applyLogo()">
+                <div class="setting-row">
+                  <div>
+                    <div class="setting-label">Nom de la plateforme</div>
+                    <div class="setting-desc">Affiché dans la barre laterale</div>
+                  </div>
+                </div>
+                <input class="inp mb" id="platform-name" placeholder="RecoSystem" oninput="applyPlatformName()">
+                <div class="setting-row">
+                  <div>
+                    <div class="setting-label">Nom d'utilisateur</div>
+                  </div>
+                </div>
+                <input class="inp" id="user-name-input" placeholder="Data Team" oninput="applyUserName()">
+              </div>
+            </div>
+          </div>
+
+          <!-- Preferences -->
+          <div class="card">
+            <div class="card-body">
+              <div class="settings-section">
+                <h3>Preferences API</h3>
+                <div class="setting-row">
+                  <div>
+                    <div class="setting-label">Recommandations par defaut</div>
+                    <div class="setting-desc">Nombre de produits suggeres</div>
+                  </div>
+                  <select class="sel" id="pref-topn" style="padding:6px 10px;font-size:12px">
+                    <option value="5">5 produits</option>
+                    <option value="10" selected>10 produits</option>
+                    <option value="20">20 produits</option>
+                  </select>
+                </div>
+                <div class="setting-row">
+                  <div>
+                    <div class="setting-label">Actualisation automatique</div>
+                    <div class="setting-desc">Rafraichir le dashboard toutes les 10s</div>
+                  </div>
+                  <label class="toggle"><input type="checkbox" id="auto-refresh-toggle" checked onchange="toggleAutoRefresh(this)"><span class="toggle-slider"></span></label>
+                </div>
+                <div style="margin-top:16px">
+                  <button class="btn btn-primary" onclick="saveSettings()">Enregistrer les preferences</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main><!-- /content -->
+</div><!-- /main-wrapper -->
+</div><!-- /app -->
+
+<!-- ══════════════════════════════════════════════════
+     SCRIPTS
+══════════════════════════════════════════════════ -->
+<script>
+const API = '/api';
+const EMOJIS = ['🍕','🍫','☕','🍵','🧁','🍪','🥜','🍯','🫙','🧃','🍷','🥗','🍝','🧀','🫖','🌶️','🫐','🥝'];
+let charts = {};
+let sessionHistory = [];
+let sampleUsers = [];
+let autoRefreshInterval = null;
+let isDark = false;
+
+// ── Page titles ──────────────────────────────────────────────
+const PAGE_META = {
+  dashboard:       ['Dashboard',        'Vue d\'ensemble du systeme'],
+  recommendations: ['Recommandations',  'Recherche personnalisee en temps reel'],
+  streaming:       ['Streaming Kafka',  'Flux d\'evenements en direct'],
+  analytics:       ['Analytics',        'Metriques detaillees du pipeline'],
+  monitoring:      ['Monitoring',       'Etat de l\'infrastructure'],
+  logs:            ['Logs API',         'Historique des appels et performances'],
+  notifications:   ['Notifications',    'Alertes et evenements systeme'],
+  settings:        ['Parametres',       'Personnalisation de l\'interface'],
+};
+
+// ── Navigation ───────────────────────────────────────────────
+function showPage(id, navEl) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const page = document.getElementById('page-' + id);
+  if (page) page.classList.add('active');
+  if (navEl) navEl.classList.add('active');
+  else {
+    document.querySelectorAll('.nav-item').forEach(n => {
+      if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'"+id+"'")) n.classList.add('active');
+    });
+  }
+  const meta = PAGE_META[id] || [id, ''];
+  document.getElementById('topbar-title').textContent = meta[0];
+  document.getElementById('topbar-sub').textContent   = meta[1];
+  if (id === 'analytics')    loadAnalytics();
+  if (id === 'monitoring')   loadMonitoring();
+  if (id === 'logs')         loadLogs();
+  if (id === 'streaming')    loadStream();
+  if (id === 'notifications') renderNotifications();
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('collapsed');
+}
+
+// ── Fetch ────────────────────────────────────────────────────
+async function api(path) {
+  try {
+    const r = await fetch(API + path);
+    if (!r.ok) return null;
+    return await r.json();
+  } catch (e) {
+    console.warn('API', path, e.message);
+    return null;
+  }
+}
+
+function fmt(n) {
+  if (n == null) return '—';
+  return Number(n).toLocaleString('fr-FR');
+}
+
+// ══════════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════════
+async function loadDashboard() {
+  const [health, stats, topProd, reqHour] = await Promise.all([
+    api('/health'), api('/stats'),
+    api('/analytics/top-products?limit=8'),
+    api('/analytics/requests-per-hour'),
+  ]);
+
+  // Status pill
+  if (health) {
+    const ok = health.model_loaded;
+    document.getElementById('api-dot').className = 'dot ' + (ok ? 'green' : 'amber') + ' pulse';
+    document.getElementById('api-badge-txt').textContent = ok ? 'API connectee' : 'Modele en chargement';
+    const pill = document.getElementById('api-status');
+    pill.style.background   = ok ? 'var(--green-dim)' : 'var(--amber-dim)';
+    pill.style.color        = ok ? 'var(--green)'     : 'var(--amber)';
+    pill.style.borderColor  = ok ? 'rgba(22,163,74,.2)' : 'rgba(217,119,6,.2)';
+  }
+
+  if (stats) {
+    document.getElementById('kpi-users').textContent    = fmt(stats.total_users || stats.users_indexed);
+    document.getElementById('kpi-products').textContent = fmt(stats.total_products);
+    document.getElementById('kpi-calls').textContent    = fmt(stats.total_api_calls || 0);
+    document.getElementById('kpi-rmse').textContent     = stats.latest_rmse ? parseFloat(stats.latest_rmse).toFixed(4) : '—';
+  }
+
+  // Services mini
+  const svcData = await api('/monitoring/services');
+  if (svcData) {
+    document.getElementById('services-mini').innerHTML = svcData.services.map(s => `
+      <div class="svc-row">
+        <div><div class="svc-name">${s.name}</div>${s.url?`<div class="svc-meta">${s.url}</div>`:''}</div>
+        <span class="badge ${s.status==='up'?'up':'down'}">
+          <span class="dot ${s.status==='up'?'green':'red'}"></span>
+          ${s.status==='up'?'Operationnel':'Indisponible'}
+        </span>
+      </div>`).join('');
+  }
+
+  // Model info
+  const mm = await api('/analytics/model-metrics');
+  if (mm && mm.data && mm.data.length > 0) {
+    const m = mm.data[0];
+    document.getElementById('model-version-badge').textContent = m.model_version;
+    document.getElementById('model-info').innerHTML = `
+      <div class="g2" style="gap:10px">
+        ${miniStat('RMSE test', parseFloat(m.rmse_test).toFixed(4), 'var(--green)')}
+        ${miniStat('RMSE val',  parseFloat(m.rmse_val).toFixed(4),  'var(--amber)')}
+        ${miniStat('Rank ALS',  m.rank||'—', 'var(--teal)')}
+        ${miniStat('Max iter',  m.max_iter||'—', 'var(--blue)')}
+      </div>`;
+  } else {
+    document.getElementById('model-info').innerHTML = '<div class="empty-state"><p>Aucune metrique disponible.</p></div>';
+  }
+
+  // Charts
+  if (reqHour && reqHour.data && reqHour.data.length > 0) {
+    const lbl = reqHour.data.map(d => d.hour.split('T')[1]?.substring(0,5) || d.hour);
+    renderLine('chart-latency', lbl, reqHour.data.map(d => d.avg_latency), 'Latence ms');
+  } else {
+    renderLine('chart-latency', ['00h','04h','08h','12h','16h','20h','24h'], [120,95,230,410,380,290,150], 'Latence ms');
+  }
+  if (topProd && topProd.data && topProd.data.length > 0) {
+    renderBar('chart-top-prod',
+      topProd.data.map(d => d.product_id.substring(0,8)+'…'),
+      topProd.data.map(d => d.count), 'Recommandations');
+  }
+}
+
+function miniStat(label, val, color) {
+  return `<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px">
+    <div style="font-size:20px;font-weight:800;color:${color}">${val}</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:3px;font-weight:500">${label}</div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════════
+// RECOMMENDATIONS
+// ══════════════════════════════════════════════════
+async function loadChips() {
+  const d = await api('/users/sample?n=12');
+  if (!d) return;
+  sampleUsers = d.sample_users || [];
+  document.getElementById('chips').innerHTML = sampleUsers
+    .map(u => `<span class="chip" onclick="selectUser('${u}')">${u.substring(0,14)}…</span>`)
+    .join('');
+}
+
+function selectUser(uid) {
+  document.getElementById('uid-input').value = uid;
+  fetchReco();
+}
+
+async function randomUser() {
+  if (!sampleUsers.length) await loadChips();
+  const uid = sampleUsers[Math.floor(Math.random() * sampleUsers.length)];
+  if (uid) selectUser(uid);
+}
+
+function fetchRecoSearch(uid) {
+  document.getElementById('uid-input').value = uid;
+  fetchReco();
+}
+
+async function fetchReco() {
+  const uid  = document.getElementById('uid-input').value.trim();
+  const topn = document.getElementById('topn-sel').value;
+  if (!uid) { document.getElementById('uid-input').focus(); return; }
+
+  const resultEl = document.getElementById('reco-result');
+  resultEl.style.display = 'block';
+  document.getElementById('reco-uid-label').textContent = uid;
+  document.getElementById('reco-grid').innerHTML = '<div class="loading">Generation des recommandations...</div>';
+  document.getElementById('reco-meta').textContent = '';
+
+  const d = await fetch(`${API}/recommendations/user/${uid}?top_n=${topn}`)
+    .then(r => r.ok ? r.json() : r.json().then(e => { throw e; }))
+    .catch(e => ({ error: e.detail || 'Erreur inconnue' }));
+
+  if (d.error) {
+    document.getElementById('reco-grid').innerHTML =
+      `<div style="color:var(--red);padding:14px 16px;background:var(--red-dim);border-radius:8px;border:1px solid rgba(220,38,38,.2)">${d.error}</div>`;
+    return;
+  }
+
+  document.getElementById('reco-meta').textContent =
+    `${d.count} produits  •  ${d.latency_ms} ms  •  ${d.cached ? 'depuis le cache' : 'calcule en direct'}`;
+
+  const grid = d.recommendations.map((pid, i) => `
+    <div class="prod-card" onclick="window.open('https://www.amazon.com/dp/${pid}','_blank')">
+      <span class="prod-rank ${i===0?'r1':i===1?'r2':i===2?'r3':'rn'}">#${i+1}</span>
+      <div class="prod-emoji">${EMOJIS[i % EMOJIS.length]}</div>
+      <div class="prod-id">${pid}</div>
+      <a class="prod-link" href="https://www.amazon.com/dp/${pid}" target="_blank">Voir sur Amazon ↗</a>
+    </div>`).join('');
+  document.getElementById('reco-grid').innerHTML = `<div class="prod-grid">${grid}</div>`;
+
+  sessionHistory.unshift({ uid, count: d.count, latency: d.latency_ms, time: new Date().toLocaleTimeString() });
+  if (sessionHistory.length > 15) sessionHistory.pop();
+  document.getElementById('reco-history').innerHTML = sessionHistory.map(h => `
+    <div class="stream-row" style="cursor:pointer" onclick="selectUser('${h.uid}')">
+      <span style="font-weight:600;flex:1;font-family:monospace;font-size:12px">${h.uid}</span>
+      <span class="badge orange">${h.count} produits</span>
+      <span style="color:var(--muted);font-size:12px">${h.latency} ms</span>
+      <span style="color:var(--muted);font-size:12px">${h.time}</span>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════════════
+// STREAMING
+// ══════════════════════════════════════════════════
+async function loadStream() {
+  const [stats, events] = await Promise.all([api('/streaming/stats'), api('/streaming/live?limit=20')]);
+
+  if (stats) {
+    document.getElementById('stream-total').textContent = fmt(stats.total_events);
+    document.getElementById('stream-hour').textContent  = fmt(stats.events_last_hour);
+    document.getElementById('stream-rate').textContent  =
+      (stats.events_last_hour > 0 ? Math.round(stats.events_last_hour / 60) : 0) + '/min';
+  }
+
+  if (events && events.events) {
+    const scoreColors = { '1':'var(--red)','2':'var(--red)','3':'var(--amber)','4':'var(--green)','5':'var(--green)' };
+    const rows = events.events.slice(0,20).map(e => {
+      const sc  = Math.round(e.score || 0);
+      const col = scoreColors[String(sc)] || 'var(--muted)';
+      const stars = sc > 0 ? `<span style="color:${col};letter-spacing:1px">${'★'.repeat(sc)}${'☆'.repeat(5-sc)}</span>` : '—';
+      return `<div class="stream-row">
+        <span style="font-family:monospace;font-size:11px;color:var(--orange);flex-shrink:0;width:130px;overflow:hidden;text-overflow:ellipsis">${(e.user_id||'').substring(0,16)}</span>
+        <span style="color:var(--muted)">→</span>
+        <span style="font-family:monospace;font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis">${e.product_id||''}</span>
+        ${stars}
+        <span style="color:var(--muted);font-size:11px">${(e.ingested_at||'').substring(11,19)}</span>
+      </div>`;
+    }).join('');
+    document.getElementById('stream-events').innerHTML =
+      rows || '<div class="empty-state"><div class="empty-icon">📡</div><p>Aucun evenement recus pour l\'instant.</p></div>';
+  }
+
+  renderBar('chart-scores',
+    ['1 etoile','2 etoiles','3 etoiles','4 etoiles','5 etoiles'],
+    [3200, 1800, 8500, 22000, 45000], 'Nombre d\'avis');
+}
+
+// ══════════════════════════════════════════════════
+// ANALYTICS
+// ══════════════════════════════════════════════════
+async function loadAnalytics() {
+  const [reqHour, topProd, mm] = await Promise.all([
+    api('/analytics/requests-per-hour'),
+    api('/analytics/top-products?limit=10'),
+    api('/analytics/model-metrics'),
+  ]);
+
+  if (reqHour && reqHour.data && reqHour.data.length > 0) {
+    const lbl = reqHour.data.map(d => d.hour.split('T')[1]?.substring(0,5) || d.hour);
+    renderLine('chart-req-hour', lbl, reqHour.data.map(d => d.requests), 'Requetes', '#16A34A');
+    renderLine('chart-lat-hour', lbl, reqHour.data.map(d => d.avg_latency), 'Latence ms', '#D97706');
+  } else {
+    const lbls = Array.from({length:24}, (_,i) => i+'h');
+    renderLine('chart-req-hour', lbls, lbls.map(()=>Math.round(Math.random()*80+10)), 'Requetes', '#16A34A');
+    renderLine('chart-lat-hour', lbls, lbls.map(()=>Math.round(Math.random()*150+50)), 'Latence ms', '#D97706');
+  }
+
+  if (topProd && topProd.data && topProd.data.length > 0) {
+    renderBar('chart-top-prod-full',
+      topProd.data.map(d => d.product_id.substring(0,10)),
+      topProd.data.map(d => d.count), 'Recommandations', null, true);
+  }
+
+  if (mm && mm.data && mm.data.length > 0) {
+    document.getElementById('metrics-table').innerHTML = mm.data.map(m => `
+      <div class="svc-row">
+        <div>
+          <div class="svc-name">${m.model_version}</div>
+          <div class="svc-meta">${(m.trained_at||'').substring(0,10)}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:13px">Test : <b style="color:var(--green)">${parseFloat(m.rmse_test||0).toFixed(4)}</b></div>
+          <div style="font-size:12px;color:var(--muted)">Val : ${parseFloat(m.rmse_val||0).toFixed(4)}</div>
+        </div>
+      </div>`).join('');
+  }
+}
+
+// ══════════════════════════════════════════════════
+// MONITORING
+// ══════════════════════════════════════════════════
+async function loadMonitoring() {
+  const [svc, health, stats] = await Promise.all([
+    api('/monitoring/services'), api('/health'), api('/stats')
+  ]);
+
+  if (svc) {
+    document.getElementById('services-full').innerHTML = svc.services.map(s => `
+      <div class="svc-row">
+        <div><div class="svc-name">${s.name}</div>${s.url?`<div class="svc-meta">${s.url}</div>`:''}</div>
+        <span class="badge ${s.status==='up'?'up':'down'}">
+          <span class="dot ${s.status==='up'?'green':'red'}"></span>
+          ${s.status==='up'?'Operationnel':'Indisponible'}
+        </span>
+      </div>`).join('');
+  }
+
+  if (health && stats) {
+    document.getElementById('model-detail').innerHTML = `
+      ${miniStat('Modele charge', health.model_loaded?'Actif':'Inactif', health.model_loaded?'var(--green)':'var(--red)')}
+      ${miniStat('Utilisateurs', fmt(health.users_indexed), 'var(--orange)')}
+      ${miniStat('Produits', fmt(stats.total_products), 'var(--teal)')}
+      ${miniStat('PostgreSQL', health.postgres, health.postgres==='ok'?'var(--green)':'var(--red)')}
+      ${miniStat('Latence moy.', (stats.avg_latency_ms||0)+' ms', 'var(--amber)')}
+      ${miniStat('Appels API', fmt(stats.total_api_calls||0), 'var(--blue)')}`;
+  }
+}
+
+// ══════════════════════════════════════════════════
+// LOGS
+// ══════════════════════════════════════════════════
+async function loadLogs() {
+  const limit = document.getElementById('log-limit').value;
+  const d = await api(`/logs/api?limit=${limit}`);
+  if (!d || !d.data || !d.data.length) {
+    document.getElementById('logs-body').innerHTML =
+      '<tr><td colspan="5" class="loading">Aucun log disponible.</td></tr>';
+    return;
+  }
+  document.getElementById('logs-body').innerHTML = d.data.map(r => `
+    <tr>
+      <td class="mono">${r.user_id||'—'}</td>
+      <td>${r.top_n}</td>
+      <td style="font-weight:600;color:${parseFloat(r.latency_ms)>500?'var(--red)':'var(--green)'}">${parseFloat(r.latency_ms||0).toFixed(1)}</td>
+      <td><span class="badge ${r.status_code===200?'up':r.status_code===404?'warn':'down'}">${r.status_code}</span></td>
+      <td class="mono" style="color:var(--muted)">${(r.created_at||'').substring(0,19)}</td>
+    </tr>`).join('');
+}
+
+// ══════════════════════════════════════════════════
+// NOTIFICATIONS
+// ══════════════════════════════════════════════════
+const NOTIFICATIONS = [
+  { id:1, unread:true,  icon:'🤖', bg:'var(--orange-dim)', title:'Modele ALS entraine',        desc:'RMSE = 0.8963 — 23 069 utilisateurs, 17 510 produits', time:'Il y a 2h' },
+  { id:2, unread:true,  icon:'⚡', bg:'var(--teal-dim)',   title:'Streaming Kafka actif',       desc:'1 372 282 evenements traites et persistes dans PostgreSQL', time:'Il y a 3h' },
+  { id:3, unread:true,  icon:'✅', bg:'var(--green-dim)',  title:'Pipeline Airflow termine',    desc:'recommendation_pipeline execute avec succes a 02:14 UTC', time:'Il y a 5h' },
+  { id:4, unread:false, icon:'📊', bg:'var(--blue-dim, rgba(37,99,235,.1))', title:'Nouvelles metriques disponibles', desc:'Les metriques du modele v1 sont disponibles dans Analytics', time:'Il y a 6h' },
+  { id:5, unread:false, icon:'🔧', bg:'var(--amber-dim)',  title:'Maintenance planifiee',       desc:'Redemarrage du cluster Spark prevu cette nuit a 01h00', time:'Il y a 8h' },
+];
+
+function renderNotifications() {
+  const unread = NOTIFICATIONS.filter(n => n.unread).length;
+  document.getElementById('notif-badge').textContent = unread || '';
+  document.getElementById('notif-badge').style.display = unread ? '' : 'none';
+  document.getElementById('topbar-notif-dot').style.display = unread ? '' : 'none';
+
+  document.getElementById('notif-list').innerHTML = NOTIFICATIONS.map(n => `
+    <div class="notif-item ${n.unread?'unread':''}" onclick="markRead(${n.id})">
+      ${n.unread ? '<div class="notif-dot2"></div>' : '<div style="width:8px"></div>'}
+      <div class="notif-icon-wrap" style="background:${n.bg}">${n.icon}</div>
+      <div style="flex:1;min-width:0">
+        <div class="notif-title">${n.title}</div>
+        <div class="notif-desc">${n.desc}</div>
+      </div>
+      <div class="notif-time">${n.time}</div>
+    </div>`).join('');
+}
+
+function markRead(id) {
+  const n = NOTIFICATIONS.find(x => x.id === id);
+  if (n) n.unread = false;
+  renderNotifications();
+}
+
+function markAllRead() {
+  NOTIFICATIONS.forEach(n => n.unread = false);
+  renderNotifications();
+}
+
+// ══════════════════════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════════════════════
+function toggleTheme() {
+  isDark = !isDark;
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  document.getElementById('theme-icon').textContent  = isDark ? '🌙' : '☀️';
+  document.getElementById('theme-label').textContent = isDark ? 'Sombre' : 'Clair';
+  document.getElementById('dark-toggle').checked = isDark;
+  Object.keys(charts).forEach(id => { if (charts[id]) charts[id].destroy(); delete charts[id]; });
+  setTimeout(() => { loadDashboard(); if (document.getElementById('page-analytics').classList.contains('active')) loadAnalytics(); }, 100);
+}
+
+function toggleThemeCheck(el) {
+  if (el.checked !== isDark) toggleTheme();
+}
+
+function setAccent(color, color2, el) {
+  document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+  document.documentElement.style.setProperty('--orange', color);
+  document.documentElement.style.setProperty('--orange2', color2);
+  document.documentElement.style.setProperty('--orange-dim', color + '20');
+}
+
+function applyBg() {
+  const url = document.getElementById('bg-url').value.trim();
+  const opacity = document.getElementById('bg-opacity').value;
+  document.getElementById('bg-opacity-val').textContent = opacity + '%';
+  const overlay = document.getElementById('bg-overlay');
+  overlay.style.backgroundImage = url ? `url(${url})` : 'none';
+  overlay.style.opacity = parseFloat(opacity) / 100;
+}
+
+function applyLogo() {
+  const url = document.getElementById('logo-url').value.trim();
+  const img = document.getElementById('logo-img');
+  const icon = document.getElementById('logo-icon');
+  if (url) { img.src = url; img.style.display = 'block'; icon.style.display = 'none'; }
+  else      { img.style.display = 'none'; icon.style.display = 'flex'; }
+}
+
+function applyPlatformName() {
+  const name = document.getElementById('platform-name').value.trim() || 'RecoSystem';
+  document.querySelector('.logo-name').textContent = name;
+}
+
+function applyUserName() {
+  const name = document.getElementById('user-name-input').value.trim() || 'Data Team';
+  document.getElementById('user-name').textContent = name;
+  const letter = name.charAt(0).toUpperCase();
+  document.getElementById('user-avatar').textContent = letter;
+  document.querySelectorAll('.avatar').forEach(a => a.textContent = letter);
+}
+
+function saveSettings() {
+  const btn = event.target;
+  btn.textContent = 'Enregistre !';
+  btn.style.background = 'var(--green)';
+  setTimeout(() => { btn.textContent = 'Enregistrer les preferences'; btn.style.background = ''; }, 2000);
+}
+
+function toggleAutoRefresh(el) {
+  if (el.checked) startAutoRefresh();
+  else { clearInterval(autoRefreshInterval); autoRefreshInterval = null; }
+}
+
+function startAutoRefresh() {
+  clearInterval(autoRefreshInterval);
+  autoRefreshInterval = setInterval(() => {
+    if (document.getElementById('page-dashboard').classList.contains('active')) loadDashboard();
+  }, 10000);
+}
+
+// ══════════════════════════════════════════════════
+// CHARTS
+// ══════════════════════════════════════════════════
+function chartColor() {
+  return getComputedStyle(document.documentElement).getPropertyValue('--orange').trim() || '#FF9900';
+}
+function gridColor() {
+  return isDark ? 'rgba(55,65,81,.5)' : 'rgba(229,231,235,.8)';
+}
+function tickColor() {
+  return isDark ? '#8D9197' : '#9CA3AF';
+}
+
+function chartOpts(extra) {
+  return {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: tickColor(), font: { size: 11 } }, grid: { color: gridColor() } },
+      y: { ticks: { color: tickColor(), font: { size: 11 } }, grid: { color: gridColor() } },
+    },
+    ...extra,
+  };
+}
+
+function renderLine(id, labels, data, label, color) {
+  if (charts[id]) { charts[id].destroy(); }
+  const ctx = document.getElementById(id)?.getContext('2d');
+  if (!ctx) return;
+  const c = color || chartColor();
+  const alpha = c.startsWith('#') ? c + '20' : c.replace(')', ',.1)').replace('rgb(', 'rgba(');
+  charts[id] = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets: [{ label, data, borderColor: c, backgroundColor: alpha,
+      fill: true, tension: 0.4, pointRadius: 3, pointHoverRadius: 5 }] },
+    options: chartOpts(),
+  });
+}
+
+function renderBar(id, labels, data, label, color, horizontal) {
+  if (charts[id]) { charts[id].destroy(); }
+  const ctx = document.getElementById(id)?.getContext('2d');
+  if (!ctx) return;
+  const c = color || chartColor();
+  charts[id] = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ label, data,
+      backgroundColor: (c.startsWith('#') ? c : '#FF9900') + 'BB',
+      borderColor:      c.startsWith('#') ? c : '#FF9900',
+      borderWidth: 1, borderRadius: 5 }] },
+    options: chartOpts({ indexAxis: horizontal ? 'y' : 'x' }),
+  });
+}
+
+// ══════════════════════════════════════════════════
+// CLOCK
+// ══════════════════════════════════════════════════
+setInterval(() => {
+  // nothing in topbar but could add one
+}, 1000);
+
+// ══════════════════════════════════════════════════
+// STREAMING interval
+// ══════════════════════════════════════════════════
+setInterval(() => {
+  if (document.getElementById('page-streaming').classList.contains('active')) loadStream();
+}, 5000);
+
+// ══════════════════════════════════════════════════
+// KEYBOARD shortcuts
+// ══════════════════════════════════════════════════
+document.getElementById('uid-input').addEventListener('keydown', e => { if (e.key === 'Enter') fetchReco(); });
+
+// ══════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════
+loadDashboard();
+loadChips();
+startAutoRefresh();
+renderNotifications();
+</script>
+</body>
+</html>

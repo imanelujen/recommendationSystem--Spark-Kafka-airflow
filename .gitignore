@@ -1,0 +1,100 @@
+# ── Python ────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+MANIFEST
+
+# ── Virtual environments ──────────────────────────────────────────────────
+venv/
+env/
+ENV/
+.venv/
+.env/
+
+# ── Environment variables (keep .env.example) ────────────────────────────
+.env
+.env.local
+.env.production
+
+# ── IDE ───────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# ── Jupyter ───────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb
+
+# ── Spark — models & runtime artifacts ───────────────────────────────────
+spark/als_model/
+spark/indexer_model/
+spark/checkpoints/
+spark/recommendations/
+spark-warehouse/
+metastore_db/
+derby.log
+*.parquet
+
+# ── Airflow — generated config & state ───────────────────────────────────
+airflow/airflow.cfg
+airflow/airflow.db
+airflow/webserver_config.py
+airflow/airflow-webserver.pid
+airflow/logs/
+airflow/dags/__pycache__/
+*.pid
+
+# ── Logs ───────────────────────────────────────────────────────────────────
+*.log
+logs/
+*.out
+
+# ── Data files (large — provide download instructions) ────────────────────
+data/Reviews.csv
+data/raw/
+data/processed/
+*.csv
+
+# ── ML artifacts ──────────────────────────────────────────────────────────
+models/
+artifacts/
+mlruns/
+wandb/
+*.model/
+
+# ── Kafka & Zookeeper runtime data ────────────────────────────────────────
+kafka-logs/
+zookeeper-data/
+
+# ── Coverage & tests ──────────────────────────────────────────────────────
+.coverage
+htmlcov/
+.pytest_cache/
+coverage.xml
+
+# ── Temp & OS ─────────────────────────────────────────────────────────────
+tmp/
+temp/
+*.tmp
+*.bak
+*.backup
+Thumbs.db
+.DS_Store?
+._*
+
+# ── Security ───────────────────────────────────────────────────────────────
+*.pem
+*.key
+*.crt
+*.p12
+secrets/
+credentials/
